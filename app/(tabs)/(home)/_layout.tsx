@@ -1,6 +1,5 @@
-import AntDesign from "@expo/vector-icons/AntDesign";
 import { Link, Stack } from "expo-router";
-import { Pressable } from "react-native";
+import { Pressable, StyleSheet, Text } from "react-native";
 import { theme } from "../../../theme";
 
 export default function Layout() {
@@ -12,12 +11,14 @@ export default function Layout() {
           title: "Zelenko",
           headerRight: () => (
             <Link href="/new" asChild>
-              <Pressable hitSlop={20}>
-                <AntDesign
-                  name="plus-circle"
-                  size={24}
-                  color={theme.colorGreen}
-                />
+              <Pressable
+                hitSlop={8}
+                style={({ pressed }) => [
+                  styles.addButton,
+                  pressed && styles.addButtonPressed,
+                ]}
+              >
+                <Text style={styles.addButtonText}>Dodaj biljku</Text>
               </Pressable>
             </Link>
           ),
@@ -30,6 +31,30 @@ export default function Layout() {
           headerTitleAlign: "center",
         }}
       />
+      <Stack.Screen
+        name="edit"
+        options={{
+          title: "Izmeni biljku",
+          headerTitleAlign: "center",
+        }}
+      />
     </Stack>
   );
 }
+
+const styles = StyleSheet.create({
+  addButton: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 6,
+    backgroundColor: theme.colorLightGrey,
+  },
+  addButtonPressed: {
+    backgroundColor: theme.colorAppleGreen,
+  },
+  addButtonText: {
+    fontSize: 12,
+    fontWeight: "bold",
+    color: theme.colorGreen,
+  },
+});

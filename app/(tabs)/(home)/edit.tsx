@@ -1,33 +1,51 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
-  Text,
-  StyleSheet,
-  TextInput,
   Alert,
   AlertButton,
-  View,
-  Pressable,
   Linking,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { Directory, File, Paths } from "expo-file-system";
-import { ZelenkoImage } from "../components/ZelenkoImage";
-import { ZelenkoButton } from "../components/ZelenkoButton";
-import { theme } from "../theme";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { usePlantStore } from "../store/plantsStore";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { ZelenkoImage } from "../../../components/ZelenkoImage";
+import { ZelenkoButton } from "../../../components/ZelenkoButton";
+import { theme } from "../../../theme";
+import { usePlantStore } from "../../../store/plantsStore";
 
-export default function NewScreen() {
+export default function EditPlantScreen() {
+  const router = useRouter();
+  const params = useLocalSearchParams<{ plantId?: string | string[] }>();
+  const plantId = Array.isArray(params.plantId)
+    ? params.plantId[0]
+    : params.plantId;
+  const plant = usePlantStore((state) =>
+    state.plants.find((plantItem) => plantItem.id === plantId),
+  );
+  const updatePlant = usePlantStore((state) => state.updatePlant);
+
   const [name, setName] = useState<string>();
   const [days, setDays] = useState<string>();
   const [imageUri, setImageUri] = useState<string | null>(null);
-  const addPlant = usePlantStore((state) => state.addPlant);
-  const router = useRouter();
   const [mediaLibraryPermission, requestMediaLibraryPermission] =
     ImagePicker.useMediaLibraryPermissions();
   const [cameraPermission, requestCameraPermission] =
     ImagePicker.useCameraPermissions();
+
+  useEffect(() => {
+    if (!plant) {
+      return;
+    }
+
+    setName(plant.name);
+    setDays(String(plant.wateringFrequencyDays));
+    setImageUri(plant.imageUri ?? null);
+  }, [plant]);
 
   const imagePickerOptions: ImagePicker.ImagePickerOptions = {
     mediaTypes: ["images"],
@@ -49,7 +67,7 @@ export default function NewScreen() {
       source.copy(destination);
       return destination.uri;
     } catch {
-      Alert.alert("Greška pri unosu", "Nije moguće sačuvati sliku.");
+      Alert.alert("Greska pri unosu", "Nije moguce sacuvati sliku.");
       return uri;
     }
   };
@@ -64,10 +82,10 @@ export default function NewScreen() {
       const buttons: AlertButton[] = permission?.canAskAgain
         ? [{ text: "U redu" }]
         : [
-            { text: "Podešavanja", onPress: () => void Linking.openSettings() },
+            { text: "Podesavanja", onPress: () => void Linking.openSettings() },
             { text: "Odustani", style: "cancel" },
           ];
-      Alert.alert("Greška pri unosu", "Dozvoli pristup galeriji.", buttons);
+      Alert.alert("Greska pri unosu", "Dozvoli pristup galeriji.", buttons);
       return;
     }
 
@@ -89,10 +107,10 @@ export default function NewScreen() {
       const buttons: AlertButton[] = permission?.canAskAgain
         ? [{ text: "U redu" }]
         : [
-            { text: "Podešavanja", onPress: () => void Linking.openSettings() },
+            { text: "Podesavanja", onPress: () => void Linking.openSettings() },
             { text: "Odustani", style: "cancel" },
           ];
-      Alert.alert("Greška pri unosu", "Dozvoli pristup kameri.", buttons);
+      Alert.alert("Greska pri unosu", "Dozvoli pristup kameri.", buttons);
       return;
     }
 
@@ -116,29 +134,48 @@ export default function NewScreen() {
     );
   };
 
+  const handleRemoveImage = () => {
+    setImageUri(null);
+  };
+
   const handleSubmit = () => {
-    if (!name) {
-      return Alert.alert("Greška pri unosu", "Daj ime svom zelenom prijatelju");
+    if (!plant) {
+      return;
+    }
+
+    const trimmedName = name?.trim();
+    if (!trimmedName) {
+      return Alert.alert("Greska pri unosu", "Daj ime svom zelenom prijatelju");
     }
 
     if (!days) {
       return Alert.alert(
-        "Greška pri unosu",
-        `Koliko često treba zalivati ${name}?`,
+        "Greska pri unosu",
+        `Koliko cesto treba zalivati ${trimmedName}?`,
       );
     }
 
     if (Number.isNaN(Number(days))) {
-      return Alert.alert("Greška pri unosu", "Unesi broj dana za zalivanje");
+      return Alert.alert("Greska pri unosu", "Unesi broj dana za zalivanje");
     }
 
-    if (Number(days) <= 0) {
-      return Alert.alert("Greška pri unosu", "Unesi broj veci od nule");
-    }
-
-    addPlant(name, Number(days), imageUri ?? undefined);
+    updatePlant(plant.id, {
+      name: trimmedName,
+      wateringFrequencyDays: Number(days),
+      imageUri,
+    });
     router.back();
   };
+
+  if (!plant) {
+    return (
+      <View style={styles.notFoundContainer}>
+        <Text style={styles.notFoundText}>Biljka nije pronadjena.</Text>
+        <View style={styles.spacer} />
+        <ZelenkoButton title="Nazad" onPress={() => router.back()} />
+      </View>
+    );
+  }
 
   return (
     <KeyboardAwareScrollView
@@ -156,9 +193,13 @@ export default function NewScreen() {
             {imageUri ? "Promeni sliku" : "Dodaj sliku"}
           </Text>
         </Pressable>
+        {imageUri ? (
+          <Pressable onPress={handleRemoveImage} style={styles.removeImage}>
+            <Text style={styles.removeImageText}>Ukloni sliku</Text>
+          </Pressable>
+        ) : null}
       </View>
       <Text style={styles.label}>Ime tvog zelenog prijatelja</Text>
-
       <TextInput
         value={name}
         onChangeText={setName}
@@ -166,7 +207,7 @@ export default function NewScreen() {
         placeholder="npr. Kaktus Kasper"
         autoCapitalize="words"
       />
-      <Text style={styles.label}>Koliko Ž?esto se zaliva (svakih X dana)</Text>
+      <Text style={styles.label}>Koliko cesto se zaliva (svakih X dana)</Text>
       <TextInput
         value={days}
         onChangeText={setDays}
@@ -174,7 +215,7 @@ export default function NewScreen() {
         placeholder="npr. 6"
         keyboardType="number-pad"
       />
-      <ZelenkoButton title="Dodaj zelenog prijatelja" onPress={handleSubmit} />
+      <ZelenkoButton title="Sacuvaj izmene" onPress={handleSubmit} />
     </KeyboardAwareScrollView>
   );
 }
@@ -211,5 +252,26 @@ const styles = StyleSheet.create({
     marginTop: 8,
     color: theme.colorGrey,
     fontSize: 14,
+  },
+  removeImage: {
+    marginTop: 8,
+    padding: 8,
+  },
+  removeImageText: {
+    color: theme.colorGrey,
+    fontSize: 14,
+  },
+  notFoundContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: theme.colorWhite,
+    padding: 24,
+  },
+  notFoundText: {
+    fontSize: 18,
+  },
+  spacer: {
+    height: 18,
   },
 });

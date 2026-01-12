@@ -28,16 +28,6 @@ export default function Layout() {
           ),
         }}
       />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: "Profile",
-          tabBarShowLabel: false,
-          tabBarIcon: ({ color, size }) => (
-            <Entypo name="user" color={color} size={size} />
-          ),
-        }}
-      />
     </Tabs>
   );
 }

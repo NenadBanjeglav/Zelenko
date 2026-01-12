@@ -90,6 +90,17 @@ export default function PlantDetails() {
     );
   };
 
+  const handleEditPlant = () => {
+    if (!plant?.id) {
+      return;
+    }
+
+    router.navigate({
+      pathname: "/edit",
+      params: { plantId: plant.id },
+    });
+  };
+
   if (!plant) {
     return (
       <View style={styles.notFoundContainer}>
@@ -125,7 +136,14 @@ export default function PlantDetails() {
         <Text style={styles.key}>Dana od poslednjeg zalivanja</Text>
         <Text style={styles.value}>{daysSince}</Text>
       </View>
+      <ZelenkoButton
+        title="Izmeni biljku"
+        onPress={handleEditPlant}
+        variant="secondary"
+      />
+      <View style={styles.spacer} />
       <ZelenkoButton title="Zalij me!" onPress={handleWaterPlant} />
+
       <Pressable style={styles.deleteButton} onPress={handleDeletePlant}>
         <Text style={styles.deleteButtonText}>Obriši</Text>
       </Pressable>

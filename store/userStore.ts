@@ -7,6 +7,12 @@ type UserState = {
   toggleHasOnboarded: () => void;
 };
 
+type UserPersistedState = Pick<UserState, "hasFinishedOnboarding">;
+
+const userInitialState: UserPersistedState = {
+  hasFinishedOnboarding: false,
+};
+
 export const useUserStore = create(
   persist<UserState>(
     (set) => ({
@@ -23,6 +29,17 @@ export const useUserStore = create(
     {
       name: "zelenko-user-store",
       storage: createJSONStorage(() => AsyncStorage),
+      version: 1,
+      migrate: (persistedState) => {
+        if (!persistedState || typeof persistedState !== "object") {
+          return userInitialState as UserState;
+        }
+
+        const state = persistedState as Partial<UserPersistedState>;
+        return {
+          hasFinishedOnboarding: Boolean(state.hasFinishedOnboarding),
+        } as UserState;
+      },
     },
   ),
 );
