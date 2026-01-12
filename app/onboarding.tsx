@@ -49,11 +49,13 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontWeight: "bold",
     marginBottom: 12,
+    fontFamily: "Nunito_400Regular",
   },
   tagline: {
     fontSize: 24,
     color: theme.colorWhite,
     textAlign: "center",
     paddingHorizontal: 10,
+    fontFamily: "Nunito_400Regular",
   },
 });
